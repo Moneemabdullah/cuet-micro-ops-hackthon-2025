@@ -116,14 +116,14 @@ This document provides a comprehensive architectural overview of the asynchronou
 │   REDIS (State)      │  │  BullMQ (Queue)     │  │  S3 Storage      │
 │                      │  │                     │  │  (RustFS)        │
 │  Job Status Store    │  │  Job Processing     │  │                  │
-│  ┌────────────────┐ │  │  Queue              │  │  Bucket:         │
-│  │ job:abc123 → { │ │  │  ┌──────────────┐  │  │  "downloads"     │
-│  │  status: "done"│ │  │  │ Pending Jobs │  │  │                  │
-│  │  progress: 100 │ │  │  │ - job:abc123 │  │  │  files/          │
-│  │  s3Key: "..."  │ │  │  │ - job:def456 │  │  │  ├─ abc123.dat  │
-│  │  presignedUrl  │ │  │  └──────────────┘  │  │  └─ def456.dat  │
-│  │  expiresAt     │ │  │                     │  │                  │
-│  └────────────────┘ │  │  Dead Letter Queue  │  │  Presigned URLs  │
+│  ┌────────────────┐  │  │  Queue              │  │  Bucket:         │
+│  │ job:abc123 → { │  │  │  ┌──────────────┐   │  │  "downloads"     │
+│  │  status: "done"│  │  │  │ Pending Jobs │   │  │                  │
+│  │  progress: 100 │  │  │  │ - job:abc123 │   │  │  files/          │
+│  │  s3Key: "..."  │  │  │  │ - job:def456 │   │  │  ├─ abc123.dat   │
+│  │  presignedUrl  │  │  │  └──────────────┘   │  │  └─ def456.dat   │
+│  │  expiresAt     │  │  │                     │  │                  │
+│  └────────────────┘  │  │  Dead Letter Queue  │  │  Presigned URLs  │
 │                      │  │  (Failed Jobs)      │  │  (24hr expiry)   │
 └──────────────────────┘  └─────────────────────┘  └──────────────────┘
                                     ↓
@@ -147,36 +147,36 @@ This document provides a comprehensive architectural overview of the asynchronou
 │ Client │                                                  │ S3 (File)│
 └───┬────┘                                                  └────┬─────┘
     │                                                            │
-    │ 1. POST /v1/download/initiate {file_id: 70000}            │
-    ├──────────────────────────────────────────────►           │
+    │ 1. POST /v1/download/initiate {file_id: 70000}             │
+    ├──────────────────────────────────────────────►             │
     │                                                            │
-    │ 2. {jobId: "abc123", status: "queued"} (150ms)           │
-    │◄──────────────────────────────────────────────           │
+    │ 2. {jobId: "abc123", status: "queued"} (150ms)             │
+    │◄──────────────────────────────────────────────             │
     │                                                            │
-    │ [Background: Job queued → Worker picks up → Processing]  │
+    │ [Background: Job queued → Worker picks up → Processing]    │
     │                                                            │
-    │ 3. GET /status/abc123 (2s later)                          │
-    ├──────────────────────────────────────────────►           │
+    │ 3. GET /status/abc123 (2s later)                           │
+    ├──────────────────────────────────────────────►             │
     │                                                            │
-    │ 4. {status: "processing", progress: 35%}                  │
-    │◄──────────────────────────────────────────────           │
+    │ 4. {status: "processing", progress: 35%}                   │
+    │◄──────────────────────────────────────────────             │
     │                                                            │
-    │ 5. GET /status/abc123 (poll at t+5s)                      │
-    ├──────────────────────────────────────────────►           │
+    │ 5. GET /status/abc123 (poll at t+5s)                       │
+    ├──────────────────────────────────────────────►             │
     │                                                            │
-    │ 6. {status: "processing", progress: 70%}                  │
-    │◄──────────────────────────────────────────────           │
+    │ 6. {status: "processing", progress: 70%}                   │
+    │◄──────────────────────────────────────────────             │
     │                                                            │
-    │ 7. GET /status/abc123 (poll at t+8s)                      │
-    ├──────────────────────────────────────────────►           │
+    │ 7. GET /status/abc123 (poll at t+8s)                       │
+    ├──────────────────────────────────────────────►             │
     │                                                            │
-    │ 8. {status: "completed", presignedUrl: "..."}            │
-    │◄──────────────────────────────────────────────           │
+    │ 8. {status: "completed", presignedUrl: "..."}              │
+    │◄──────────────────────────────────────────────             │
     │                                                            │
-    │ 9. GET presignedUrl (direct S3 download)                  │
+    │ 9. GET presignedUrl (direct S3 download)                   │
     ├───────────────────────────────────────────────────────────►
     │                                                            │
-    │ 10. [Binary file data]                                    │
+    │ 10. [Binary file data]                                     │
     │◄───────────────────────────────────────────────────────────
     │                                                            │
 ```
@@ -188,32 +188,32 @@ This document provides a comprehensive architectural overview of the asynchronou
 │ Client │                                                  │ S3 (File)│
 └───┬────┘                                                  └────┬─────┘
     │                                                            │
-    │ 1. POST /v1/download/initiate {file_id: 70001}            │
-    ├──────────────────────────────────────────────►           │
+    │ 1. POST /v1/download/initiate {file_id: 70001}             │
+    ├──────────────────────────────────────────────►             │
     │                                                            │
-    │ 2. {jobId: "def456", status: "queued"}                   │
-    │◄──────────────────────────────────────────────           │
+    │ 2. {jobId: "def456", status: "queued"}                     │
+    │◄──────────────────────────────────────────────             │
     │                                                            │
-    │ [Worker processes for 95 seconds in background]           │
-    │ [Client polls ~32 times (every 3s) without timeout]       │
+    │ [Worker processes for 95 seconds in background]            │
+    │ [Client polls ~32 times (every 3s) without timeout]        │
     │                                                            │
     │ 3-34. Multiple polling requests                            │
-    │      GET /status/def456 (every 3 seconds)                 │
-    │      Response: {"status": "processing", "progress": X%}   │
-    │      [Each request completes in <50ms]                    │
+    │      GET /status/def456 (every 3 seconds)                  │
+    │      Response: {"status": "processing", "progress": X%}    │
+    │      [Each request completes in <50ms]                     │
     │                                                            │
-    │ ... time passes (client can close browser, it's fine) ... │
+    │ ... time passes (client can close browser, it's fine) ...  │
     │                                                            │
-    │ 35. GET /status/def456 (at t+96s)                         │
-    ├──────────────────────────────────────────────►           │
+    │ 35. GET /status/def456 (at t+96s)                          │
+    ├──────────────────────────────────────────────►             │
     │                                                            │
-    │ 36. {status: "completed", presignedUrl: "..."}           │
-    │◄──────────────────────────────────────────────           │
+    │ 36. {status: "completed", presignedUrl: "..."}             │
+    │◄──────────────────────────────────────────────             │
     │                                                            │
-    │ 37. GET presignedUrl (direct S3 download)                 │
+    │ 37. GET presignedUrl (direct S3 download)                  │
     ├───────────────────────────────────────────────────────────►
     │                                                            │
-    │ 38. [Binary file data]                                    │
+    │ 38. [Binary file data]                                     │
     │◄───────────────────────────────────────────────────────────
     │                                                            │
 ```
