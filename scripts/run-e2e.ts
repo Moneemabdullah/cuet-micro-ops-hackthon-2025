@@ -77,7 +77,7 @@ async function startServer(): Promise<ChildProcess> {
 
   const server = spawn(
     "node",
-    [...envFileArg, "--experimental-transform-types", "src/index.ts"],
+    [...envFileArg, "--loader", "ts-node/esm", "src/index.ts"],
     {
       cwd: projectDir,
       stdio: ["ignore", "pipe", "pipe"],
