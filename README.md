@@ -569,23 +569,25 @@ Only merge after all CI checks pass.
 ## Project Structure
 
 ```
+
 .
 ├── src/
-│   └── index.ts          # Main application entry point
+│ └── index.ts # Main application entry point
 ├── scripts/
-│   ├── e2e-test.ts       # E2E test suite
-│   └── run-e2e.ts        # Test runner with server management
+│ ├── e2e-test.ts # E2E test suite
+│ └── run-e2e.ts # Test runner with server management
 ├── docker/
-│   ├── Dockerfile.dev    # Development Dockerfile
-│   ├── Dockerfile.prod   # Production Dockerfile
-│   ├── compose.dev.yml   # Development Docker Compose
-│   └── compose.prod.yml  # Production Docker Compose
+│ ├── Dockerfile.dev # Development Dockerfile
+│ ├── Dockerfile.prod # Production Dockerfile
+│ ├── compose.dev.yml # Development Docker Compose
+│ └── compose.prod.yml # Production Docker Compose
 ├── .github/
-│   └── workflows/
-│       └── ci.yml        # GitHub Actions CI pipeline
+│ └── workflows/
+│ └── ci.yml # GitHub Actions CI pipeline
 ├── package.json
 ├── tsconfig.json
 └── eslint.config.mjs
+
 ```
 
 ## Security Features
@@ -601,3 +603,4 @@ Only merge after all CI checks pass.
 ## License
 
 MIT
+```
