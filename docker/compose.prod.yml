@@ -1,3 +1,5 @@
+version: "3.9"
+
 name: delineate
 
 services:
@@ -11,4 +13,57 @@ services:
       - ../.env
     environment:
       - NODE_ENV=production
+      - S3_ENDPOINT=http://rustfs:9000
+      - S3_ACCESS_KEY_ID=minioadmin
+      - S3_SECRET_ACCESS_KEY=minioadmin
+      - S3_BUCKET_NAME=downloads
+      - S3_FORCE_PATH_STYLE=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://delineate-jaeger:4318
     restart: unless-stopped
+    depends_on:
+      - rustfs
+      - delineate-jaeger
+
+  delineate-jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+
+  rustfs:
+    image: rustfs/rustfs:alpha
+    container_name: rustfs
+    ports:
+      - "9000:9000"
+    environment:
+      - RUSTFS_ACCESS_KEY=minioadmin
+      - RUSTFS_SECRET_KEY=minioadmin
+      - RUSTFS_BUCKETS=downloads
+      - RUSTFS_ADDRESS=:9000
+    command: ["rustfs"]
+    volumes:
+      - rustfs-data:/data
+    restart: unless-stopped
+
+  rustfs-ui:
+    image: minio/minio:latest
+    container_name: rustfs-ui
+    command: server /data --console-address ":9001" --address ":9002" --compat
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BROWSER: "on"
+    ports:
+      - "9001:9001"  # Web UI
+      - "9002:9002"  # S3 API
+    volumes:
+      - rustfs-data:/data
+    restart: unless-stopped
+    depends_on:
+      - rustfs
+
+volumes:
+  rustfs-data:
