@@ -109,7 +109,7 @@ async function runTests(): Promise<number> {
   return new Promise((resolve) => {
     const testProcess = spawn(
       "node",
-      ["--experimental-transform-types", "scripts/e2e-test.ts"],
+      ["--loader", "ts-node/esm", "scripts/e2e-test.ts"],
       {
         cwd: projectDir,
         stdio: "inherit",
