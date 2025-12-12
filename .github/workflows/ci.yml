@@ -29,8 +29,6 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-24.04
     needs: lint
-    container:
-      image: node:24-slim
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
