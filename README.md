@@ -526,6 +526,46 @@ npm run docker:dev   # Start with Docker (development)
 npm run docker:prod  # Start with Docker (production)
 ```
 
+## CI/CD Pipeline
+
+This project uses **GitHub Actions** for continuous integration. The pipeline ensures that all code pushed to `main` or via pull requests passes linting, formatting, and end-to-end tests before merging.
+
+### Pipeline Status
+
+![CI Status](https://github.com/Moneemabdullah/cuet-micro-ops-hackthon-2025/actions/workflows/ci.yml/badge.svg)
+
+### Running CI Locally
+
+Before pushing your changes, make sure your code passes all checks locally:
+
+```bash
+# Lint code
+npm run lint
+
+# Check code formatting
+npm run format:check
+
+# Run E2E tests
+npm run test:e2e
+Contributing
+Fork the repository and create a new branch for your feature/fix.
+
+Make changes and ensure all local tests pass.
+
+Commit your changes with clear messages.
+
+Push to your fork and open a pull request.
+
+GitHub Actions will automatically run CI:
+
+Lint
+
+Format check
+
+End-to-end tests
+
+Only merge after all CI checks pass.
+
 ## Project Structure
 
 ```
