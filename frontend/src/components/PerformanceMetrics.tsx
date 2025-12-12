@@ -1,13 +1,14 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
+=======
+import Chart from "./Chart";
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)
 
-// Define the metrics state structure
-interface MetricsState {
-  responseTime: number;
-  successRate: number;
-  failureRate: number;
-  requestsPerMin: number;
-}
+const PerformanceMetrics = () => {
+  return <Chart />;
+};
 
+<<<<<<< HEAD
 export const PerformanceMetrics: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricsState>({
     responseTime: 120,
@@ -144,3 +145,6 @@ export const PerformanceMetrics: React.FC = () => {
     </div>
   );
 };
+=======
+export default PerformanceMetrics;
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)

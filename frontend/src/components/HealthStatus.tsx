@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -58,10 +59,34 @@ export const HealthStatus: React.FC = () => {
       setLastRefresh(new Date());
     }
   }, []);
+=======
+import React, { useEffect, useState } from "react";
+
+interface Props {
+  baseUrl: string;
+}
+
+const HealthStatus: React.FC<Props> = ({ baseUrl }) => {
+  const [health, setHealth] = useState<{
+    status: string;
+    checks: { storage: string };
+  } | null>(null);
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)
 
   useEffect(() => {
-    fetchData(); // Initial fetch
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch(`${baseUrl}/health`);
+        const data = await res.json();
+        setHealth(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchHealth();
+  }, [baseUrl]);
 
+<<<<<<< HEAD
     // Auto-refresh/Polling setup
     const interval = setInterval(fetchData, POLLING_INTERVAL_MS);
     return () => clearInterval(interval); // Cleanup on unmount
@@ -189,3 +214,24 @@ export const HealthStatus: React.FC = () => {
     </div>
   );
 };
+=======
+  const statusColor = health?.status === "healthy" ? "green" : "red";
+
+  return (
+    <div className="p-6 bg-white rounded shadow flex flex-col items-center">
+      <h2 className="text-xl font-bold mb-4">Health Status</h2>
+      {health ? (
+        <>
+          <div className={`w-4 h-4 rounded-full mb-2 bg-${statusColor}-500`} />
+          <p className="text-gray-700">Service: {health.status}</p>
+          <p className="text-gray-500">Storage: {health.checks.storage}</p>
+        </>
+      ) : (
+        <p className="text-gray-500">Loading...</p>
+      )}
+    </div>
+  );
+};
+
+export default HealthStatus;
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)

@@ -1,7 +1,10 @@
+<<<<<<< HEAD
 import * as Sentry from "@sentry/react";
 import { Component, ErrorInfo, ReactNode } from "react";
+=======
+import { Component, ReactNode } from "react";
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)
 
-// --- Type Definitions ---
 interface Props {
   children: ReactNode;
 }
@@ -9,38 +12,43 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  showDetails: boolean; // Interactive state for toggling error details
 }
 
+<<<<<<< HEAD
 /**
  * @class ErrorBoundary
  * @description A React Class Component that catches JavaScript errors
  * anywhere in its child component tree, logs those errors to Sentry,
  * and displays a fallback UI instead of crashing the entire application.
  */
+=======
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, showDetails: false };
+    this.state = { hasError: false, error: null };
   }
 
-  // Lifecycle method to update state when an error is thrown
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, showDetails: false };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
   }
 
+<<<<<<< HEAD
   // Lifecycle method for logging error information
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log the error to an error reporting service like Sentry
     Sentry.captureException(error, { extra: errorInfo });
     console.error("Error caught by boundary:", error, errorInfo);
+=======
+  componentDidCatch(error: Error, info: any) {
+    console.error("ErrorBoundary caught an error:", error, info);
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)
   }
 
-  // --- Render Method (Enhanced UI) ---
   render() {
     if (this.state.hasError) {
-      // Fallback UI: Professional, Dark, Glassmorphism design
       return (
+<<<<<<< HEAD
         <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4">
           {/* Glassmorphism Card (bg-black/30 backdrop-blur-lg) */}
           <div className="bg-black/30 backdrop-blur-lg rounded-xl p-8 max-w-lg w-full shadow-2xl shadow-red-900/40 border border-gray-700/50 animate-fade-in">
@@ -128,12 +136,44 @@ class ErrorBoundary extends Component<Props, State> {
             <p className="text-xs text-gray-500 text-center mt-4">
               If the issue persists, please clear your browser cache.
             </p>
+=======
+        <div
+          className="
+            p-8 rounded-2xl
+            bg-red-50/90 backdrop-blur-md
+            border border-red-200
+            shadow-xl
+            flex flex-col items-start
+          "
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">⚠️</span>
+            <h2 className="text-2xl font-bold text-red-700 tracking-wide">
+              Something went wrong
+            </h2>
+>>>>>>> 2841dc2 (feat: add sentry & OTEL)
           </div>
+
+          <p className="text-red-600 font-medium mb-4">
+            {this.state.error?.message || "An unexpected error occurred."}
+          </p>
+
+          <button
+            onClick={() => window.location.reload()}
+            className="
+              mt-2
+              bg-red-600 hover:bg-red-700 
+              text-white px-4 py-2 rounded-xl
+              shadow-md hover:shadow-lg
+              transition duration-300
+            "
+          >
+            🔄 Reload Page
+          </button>
         </div>
       );
     }
 
-    // Render children normally
     return this.props.children;
   }
 }
