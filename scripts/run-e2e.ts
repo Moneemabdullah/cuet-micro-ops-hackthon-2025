@@ -77,7 +77,7 @@ async function startServer(): Promise<ChildProcess> {
 
   const server = spawn(
     "node",
-    [...envFileArg, "--loader", "ts-node/esm", "src/index.ts"],
+    [...envFileArg, "-r", "ts-node/register", "src/index.ts"],
     {
       cwd: projectDir,
       stdio: ["ignore", "pipe", "pipe"],
@@ -109,7 +109,7 @@ async function runTests(): Promise<number> {
   return new Promise((resolve) => {
     const testProcess = spawn(
       "node",
-      ["--loader", "ts-node/esm", "scripts/e2e-test.ts"],
+      ["-r", "ts-node/register", "scripts/e2e-test.ts"],
       {
         cwd: projectDir,
         stdio: "inherit",
