@@ -3,67 +3,85 @@ version: "3.9"
 name: delineate
 
 services:
-  delineate-app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - ../src:/app/src
-      - ../.env:/app/.env
-    env_file:
-      - ../.env
-    environment:
-      - NODE_ENV=development
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://delineate-jaeger:4318
-      - S3_ENDPOINT=http://rustfs:9000
-      - S3_ACCESS_KEY_ID=minioadmin
-      - S3_SECRET_ACCESS_KEY=minioadmin
-      - S3_BUCKET_NAME=downloads
-      - S3_FORCE_PATH_STYLE=true
-    depends_on:
-      - delineate-jaeger
-      - rustfs
-      - rustfs-ui
+    delineate-app:
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile.dev
+        ports:
+            - "3000:3000"
+        volumes:
+            - ../src:/app/src
+            - ../.env:/app/.env
+        env_file:
+            - ../.env
+        environment:
+            - NODE_ENV=development
+            - OTEL_EXPORTER_OTLP_ENDPOINT=http://delineate-jaeger:4318
+            - S3_ENDPOINT=http://rustfs:9000
+            - S3_ACCESS_KEY_ID=minioadmin
+            - S3_SECRET_ACCESS_KEY=minioadmin
+            - S3_BUCKET_NAME=downloads
+            - S3_FORCE_PATH_STYLE=true
+        depends_on:
+            - delineate-jaeger
+            - rustfs
+            - rustfs-ui
 
-  delineate-jaeger:
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - "16686:16686"
-      - "4318:4318"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
+    # ---------------------------------------
+    # FRONTEND SERVICE
+    # ---------------------------------------
+    frontend:
+        build:
+            context: ../frontend
+            dockerfile: Dockerfile.dev
+        ports:
+            - "5173:5173" # Vite default port
+        volumes:
+            - ../frontend/src:/app/src
+            - ../frontend/.env:/app/.env
+        environment:
+            - VITE_API_URL=http://localhost:3000
+            - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
+        depends_on:
+            - delineate-app
 
-  rustfs:
-    image: rustfs/rustfs:alpha
-    container_name: rustfs
-    ports:
-      - "9000:9000"
-    environment:
-      - RUSTFS_ACCESS_KEY=minioadmin
-      - RUSTFS_SECRET_KEY=minioadmin
-      - RUSTFS_BUCKETS=downloads
-      - RUSTFS_ADDRESS=:9000
-    command: ["rustfs"]
-    volumes:
-      - rustfs-data:/data
+    delineate-jaeger:
+        image: jaegertracing/all-in-one:latest
+        ports:
+            - "16686:16686"
+            - "4318:4318"
+        environment:
+            - COLLECTOR_OTLP_ENABLED=true
 
-  rustfs-ui:
-    image: minio/minio:latest
-    container_name: rustfs-ui
-    command: server /data --console-address ":9001" --address ":9002" --compat
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      MINIO_BROWSER: "on"
-    ports:
-      - "9001:9001"  # web console
-      - "9002:9002"  # S3 API port for UI
-    volumes:
-      - rustfs-data:/data
-    depends_on:
-      - rustfs
+    rustfs:
+        image: rustfs/rustfs:alpha
+        container_name: rustfs
+        ports:
+            - "9000:9000"
+        environment:
+            - RUSTFS_ACCESS_KEY=minioadmin
+            - RUSTFS_SECRET_KEY=minioadmin
+            - RUSTFS_BUCKETS=downloads
+            - RUSTFS_ADDRESS=:9000
+        command: ["rustfs"]
+        volumes:
+            - rustfs-data:/data
+
+    rustfs-ui:
+        image: minio/minio:latest
+        container_name: rustfs-ui
+        command: server /data --console-address ":9001" --address ":9002" --compat
+        environment:
+            MINIO_ROOT_USER: minioadmin
+            MINIO_ROOT_PASSWORD: minioadmin
+            MINIO_BROWSER: "on"
+        ports:
+            - "9001:9001"
+            - "9002:9002"
+        volumes:
+            - rustfs-data:/data
+        depends_on:
+            - rustfs
 
 volumes:
-  rustfs-data:
+    rustfs-data:
