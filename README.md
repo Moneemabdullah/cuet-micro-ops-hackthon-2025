@@ -1,4 +1,5 @@
 # Delineate Hackathon Challenge - CUET Fest 2025
+
 ### Pipeline Status
 
 ![CI Status](https://github.com/Moneemabdullah/cuet-micro-ops-hackthon-2025/actions/workflows/ci.yml/badge.svg)
@@ -532,8 +533,6 @@ npm run docker:prod  # Start with Docker (production)
 ## CI/CD Pipeline
 
 This project uses **GitHub Actions** for continuous integration. The pipeline ensures that all code pushed to `main` or via pull requests passes linting, formatting, and end-to-end tests before merging.
-
-
 
 ### Running CI Locally
 
