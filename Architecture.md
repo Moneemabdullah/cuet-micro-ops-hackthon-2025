@@ -230,7 +230,8 @@ This document provides a comprehensive architectural overview of the asynchronou
 
 **Description:** Single-page React application providing user interface for initiating downloads, monitoring progress, and retrieving completed files. Implements smart polling with exponential backoff and automatic retry logic.
 
-**Technologies:** 
+**Technologies:**
+
 - React 18+ (Hooks-based)
 - Axios for HTTP requests
 - React Query (for polling optimization)
@@ -239,6 +240,7 @@ This document provides a comprehensive architectural overview of the asynchronou
 **Deployment:** Static hosting on Brilliant Cloud CDN
 
 **Key Features:**
+
 - Initiates download with single API call
 - Polls status endpoint every 3 seconds
 - Shows real-time progress bar
@@ -256,6 +258,7 @@ This document provides a comprehensive architectural overview of the asynchronou
 **Description:** Stateless REST API service responsible for accepting download requests, creating jobs, enqueueing work, and serving job status. Horizontally scalable with no session state.
 
 **Technologies:**
+
 - Node.js 20+
 - Express.js 4.x
 - TypeScript 5.x
@@ -270,7 +273,7 @@ This document provides a comprehensive architectural overview of the asynchronou
 ```typescript
 POST /v1/download/initiate
 Request:  { file_id: number }
-Response: { 
+Response: {
   jobId: string,           // Unique job identifier
   status: "queued",
   estimatedTime: number,   // Rough estimate in seconds
@@ -305,6 +308,7 @@ Response: {
 ```
 
 **Configuration (Environment Variables):**
+
 ```bash
 # Server
 # Server Configuration
@@ -348,6 +352,7 @@ PRESIGNED_URL_EXPIRY_SECONDS=86400  # 24 hours
 **Description:** Background job processing service that consumes jobs from BullMQ queue, performs actual file processing (simulated download), uploads results to S3, generates presigned URLs, and updates job status in Redis.
 
 **Technologies:**
+
 - Node.js 20+
 - BullMQ Worker
 - AWS SDK v3
@@ -356,6 +361,7 @@ PRESIGNED_URL_EXPIRY_SECONDS=86400  # 24 hours
 **Deployment:** Separate Docker containers, autoscaled based on queue depth
 
 **Processing Flow:**
+
 1. Dequeue job from BullMQ
 2. Simulate download processing (10-120s based on config)
 3. Generate file data
@@ -365,12 +371,14 @@ PRESIGNED_URL_EXPIRY_SECONDS=86400  # 24 hours
 7. Acknowledge job completion
 
 **Scaling Strategy:**
+
 - Horizontal Pod Autoscaler (HPA) based on queue depth
 - Target: 5 jobs per worker
 - Min replicas: 2
 - Max replicas: 20
 
 **Retry Logic:**
+
 - Max attempts: 3
 - Backoff: Exponential (1s, 4s, 16s)
 - Failed jobs → Dead Letter Queue
@@ -388,6 +396,7 @@ PRESIGNED_URL_EXPIRY_SECONDS=86400  # 24 hours
 **Purpose:** Fast, distributed job state tracking. Stores current status, progress, and presigned URLs for active downloads.
 
 **Key Schema:**
+
 ```
 Key Pattern: job:{jobId}
 
@@ -423,6 +432,7 @@ TTL: 86400 seconds (24 hours after completion)
 **Purpose:** Reliable, distributed job queue for decoupling API requests from long-running processing. Provides retry logic, dead-letter queues, and job scheduling.
 
 **Queue Configuration:**
+
 ```typescript
 {
   name: "download-jobs",
@@ -441,6 +451,7 @@ TTL: 86400 seconds (24 hours after completion)
 ```
 
 **Monitoring:**
+
 - Queue depth (alert if >100)
 - Processing rate (jobs/second)
 - Failed job count
@@ -457,6 +468,7 @@ TTL: 86400 seconds (24 hours after completion)
 **Purpose:** Persistent storage for processed download files. Provides presigned URL generation for direct client downloads (bypassing API/proxy).
 
 **Bucket Structure:**
+
 ```
 downloads/
   └── files/
@@ -466,22 +478,26 @@ downloads/
 ```
 
 **Access Patterns:**
+
 1. **Write:** Worker uploads processed file
 2. **Read:** Client downloads via presigned URL (direct S3 access)
 
 **Lifecycle Policy:**
+
 - Files auto-delete after 7 days
 - Incomplete multipart uploads cleaned after 24 hours
 
 **Configuration:**
+
 ```yaml
 endpoint: http://rustfs:9000
 bucket: downloads
 region: us-east-1
-forcePathStyle: true  # Required for self-hosted S3
+forcePathStyle: true # Required for self-hosted S3
 ```
 
 **Security:**
+
 - Bucket is private (no public access)
 - All downloads via presigned URLs only
 - URLs expire after 24 hours
@@ -513,27 +529,27 @@ services:
     image: nginx:alpine
     ports: [80:80, 443:443]
     configs: [nginx.conf with 100s timeout]
-    
+
   # API Service (Stateless, scalable)
   api:
     build: ./Dockerfile.prod
     replicas: 3
     environment: [S3_*, REDIS_*, QUEUE_*]
     healthcheck: /health
-    
+
   # Worker Service (Autoscaling)
   worker:
     build: ./Dockerfile.prod
     command: npm run worker
     replicas: 2-20 (autoscale)
     environment: [S3_*, REDIS_*, QUEUE_*]
-    
+
   # Redis (State Store)
   redis:
     image: redis:7-alpine
     volumes: [redis-data:/data]
     command: redis-server --appendonly yes
-    
+
   # RustFS (S3 Storage)
   rustfs:
     image: rustfs/rustfs:latest
@@ -552,25 +568,25 @@ services:
 
 ```yaml
 1. Code Quality:
-   - Lint (ESLint)
-   - Type check (TypeScript)
-   - Unit tests (Jest)
-   
+  - Lint (ESLint)
+  - Type check (TypeScript)
+  - Unit tests (Jest)
+
 2. Build:
-   - Docker image build (multi-stage)
-   - Vulnerability scan (Trivy)
-   - Push to registry
-   
+  - Docker image build (multi-stage)
+  - Vulnerability scan (Trivy)
+  - Push to registry
+
 3. Test:
-   - E2E tests (npm run test:e2e)
-   - Performance tests (k6)
-   - Health check validation
-   
+  - E2E tests (npm run test:e2e)
+  - Performance tests (k6)
+  - Health check validation
+
 4. Deploy:
-   - Deploy to staging
-   - Smoke tests
-   - Deploy to production (blue-green)
-   - Monitor rollout
+  - Deploy to staging
+  - Smoke tests
+  - Deploy to production (blue-green)
+  - Monitor rollout
 ```
 
 **Deployment Strategy:** Blue-Green deployment with automated rollback on health check failure
@@ -578,6 +594,7 @@ services:
 ### 6.4 Monitoring & Observability
 
 **Metrics (Prometheus):**
+
 - API request rate, latency, error rate
 - Queue depth, processing rate
 - Worker utilization
@@ -585,22 +602,26 @@ services:
 - S3 upload/download rates
 
 **Logging (Structured JSON):**
+
 - Request logs (correlation ID)
 - Job lifecycle events
 - Error traces with context
 
 **Tracing (OpenTelemetry):**
+
 - End-to-end request tracing
 - Job processing spans
 - S3 operation traces
 
 **Alerting:**
+
 - Queue depth >100 (scale workers)
 - API error rate >5%
 - Redis memory >80%
 - Worker processing time >150s
 
 **Dashboards (Grafana):**
+
 - System health overview
 - Download success rate
 - Processing time distribution
@@ -614,14 +635,16 @@ services:
 
 **Current:** None (hackathon scope)
 
-**Production Recommendation:** 
+**Production Recommendation:**
+
 - API Key authentication for download initiation
 - JWT tokens for status polling
 - Rate limiting per API key (100 req/min)
 
 ### 7.2 Authorization
 
-**File Access:** 
+**File Access:**
+
 - Job IDs are UUIDs (unguessable)
 - Presigned S3 URLs expire after 24 hours
 - No directory listing allowed on S3
@@ -629,10 +652,12 @@ services:
 ### 7.3 Data Encryption
 
 **In Transit:**
+
 - TLS 1.3 for all external connections
 - Internal services: mTLS (service mesh)
 
 **At Rest:**
+
 - S3 server-side encryption (AES-256)
 - Redis encryption at rest (if supported by provider)
 
@@ -670,23 +695,27 @@ curl http://localhost:3000/health
 ### 8.2 Testing Strategy
 
 **Unit Tests (Jest):**
+
 - Service layer logic
 - Utility functions
 - Error handling
 
 **Integration Tests:**
+
 - API endpoint behavior
 - Redis operations
 - Queue processing
 - S3 uploads
 
 **E2E Tests:**
+
 ```bash
 npm run test:e2e
 # Tests full flow: initiate → poll → download
 ```
 
 **Load Tests (k6):**
+
 - 100 concurrent downloads
 - Verify no timeouts
 - Check worker autoscaling
@@ -757,6 +786,7 @@ npm run test:e2e
 **Problem:** Worker dies mid-download
 
 **Mitigation:**
+
 - Job remains in queue (unacknowledged)
 - BullMQ auto-retries after visibility timeout
 - Max 3 attempts → Dead Letter Queue
@@ -767,6 +797,7 @@ npm run test:e2e
 **Problem:** Redis becomes unavailable
 
 **Mitigation:**
+
 - Redis cluster with automatic failover
 - API returns 503 Service Unavailable
 - Health check fails → prevent new requests
@@ -777,6 +808,7 @@ npm run test:e2e
 **Problem:** RustFS/S3 is unreachable
 
 **Mitigation:**
+
 - Worker retries upload (exponential backoff)
 - Job marked as failed after 3 attempts
 - Alert triggered for investigation
@@ -787,6 +819,7 @@ npm run test:e2e
 **Problem:** User closes browser mid-download
 
 **Mitigation:**
+
 - ✅ Job continues processing in background
 - ✅ User can return and poll same jobId
 - ✅ Presigned URL valid for 24 hours
@@ -797,6 +830,7 @@ npm run test:e2e
 **Problem:** Proxy has 100s timeout
 
 **Mitigation:**
+
 - ✅ All API calls complete in <5s
 - ✅ Long processing happens in background workers
 - ✅ Polling never exceeds timeout
@@ -809,36 +843,41 @@ npm run test:e2e
 ### 11.1 Horizontal Scaling
 
 **API Service:**
+
 - Stateless design allows unlimited horizontal scaling
 - Load balancer distributes requests (round-robin)
 - Each instance independent
 
 **Worker Service:**
+
 - Autoscale based on queue depth
 - Formula: `desiredWorkers = ceil(queueDepth / 5)`
 - Each worker processes 5 jobs concurrently
 
 ### 11.2 Performance Targets
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| API initiate latency | <200ms | 150ms |
-| API status latency | <50ms | 30ms |
-| Worker throughput | 10 jobs/sec | 8 jobs/sec |
-| Queue max depth | <100 | 15 |
-| Success rate | >99% | 99.7% |
+| Metric               | Target      | Current    |
+| -------------------- | ----------- | ---------- |
+| API initiate latency | <200ms      | 150ms      |
+| API status latency   | <50ms       | 30ms       |
+| Worker throughput    | 10 jobs/sec | 8 jobs/sec |
+| Queue max depth      | <100        | 15         |
+| Success rate         | >99%        | 99.7%      |
 
 ### 11.3 Cost Optimization
 
 **Compute:**
+
 - Use spot instances for workers (80% cost savings)
 - Aggressive autoscaling down during low traffic
 
 **Storage:**
+
 - Auto-delete files after 7 days
 - Use S3 Intelligent-Tiering if available
 
 **Network:**
+
 - Presigned URLs reduce egress from API
 
 ---
@@ -869,13 +908,14 @@ npm run test:e2e
 
 ## 13. Glossary
 
-| Term | Definition |
-|------|------------|
-| **Job** | A single download processing task with unique ID |
-| **Worker** | Background process that executes download jobs |
-| **Presigned URL** | Time-limited S3 URL granting temporary download access |
-| **Polling** | Client repeatedly requests status until job completes |
-| **BullMQ** | Redis-backed job queue library for Node.js |
-| **RustFS** | Lightweight S3-compatible object storage |
-| **Dead Letter Queue** | Queue for jobs that failed all retry attempts |
-| **Blue
+| Term                  | Definition                                             |
+| --------------------- | ------------------------------------------------------ |
+| **Job**               | A single download processing task with unique ID       |
+| **Worker**            | Background process that executes download jobs         |
+| **Presigned URL**     | Time-limited S3 URL granting temporary download access |
+| **Polling**           | Client repeatedly requests status until job completes  |
+| **BullMQ**            | Redis-backed job queue library for Node.js             |
+| **RustFS**            | Lightweight S3-compatible object storage               |
+| **Dead Letter Queue** | Queue for jobs that failed all retry attempts          |
+
+| \*\*Blue

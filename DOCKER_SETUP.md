@@ -5,7 +5,7 @@
 1. **Frontend service configuration** - Updated paths and environment variables
 2. **Created `Dockerfile.dev`** for frontend with Vite configuration
 3. **Updated Vite config** to work with Docker (host 0.0.0.0, port 5173)
-4. **Fixed environment variables** - Changed from REACT*APP*_ to VITE\__
+4. **Fixed environment variables** - Changed from REACT*APP*\_ to VITE\_\_
 5. **Added `.dockerignore`** to optimize build
 
 ## Services

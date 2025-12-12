@@ -7,14 +7,14 @@ import { XMLHttpRequestInstrumentation } from "@opentelemetry/instrumentation-xm
 const provider = new WebTracerProvider();
 
 const exporter = new OTLPTraceExporter({
-    url: process.env.REACT_APP_OTEL_EXPORTER_OTLP_ENDPOINT,
+  url: process.env.REACT_APP_OTEL_EXPORTER_OTLP_ENDPOINT,
 });
 
 provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 provider.register();
 
 registerInstrumentations({
-    instrumentations: [new XMLHttpRequestInstrumentation()],
+  instrumentations: [new XMLHttpRequestInstrumentation()],
 });
 
 console.log("OpenTelemetry Initialized");
